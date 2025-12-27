@@ -1,0 +1,3 @@
+[workspace]
+members = ["backend", "client", "common", "crate/world"]
+resolver = "2"

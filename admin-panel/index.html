@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Admin Panel - MM</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 Painel Administrativo - MM</h1>
+            <div id="connection-status" class="status disconnected">⚫ Desconectado</div>
+        </header>
+
+        <div class="dashboard">
+            <!-- Estatísticas -->
+            <section class="card stats">
+                <h2>📊 Estatísticas do Servidor</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Uptime</span>
+                        <span class="stat-value" id="uptime">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Jogadores Ativos</span>
+                        <span class="stat-value" id="active-players">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total de Entidades</span>
+                        <span class="stat-value" id="total-entities">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mundo</span>
+                        <span class="stat-value" id="world-size">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Ticks Processados</span>
+                        <span class="stat-value" id="ticks">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Eventos em Tempo Real -->
+            <section class="card events">
+                <h2>📡 Eventos em Tempo Real</h2>
+                <div id="events-container" class="events-list"></div>
+            </section>
+
+            <!-- Mapa do Mundo -->
+            <section class="card map">
+                <h2>🗺️ Visão Geral do Mundo</h2>
+                <div id="world-map" class="world-grid"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

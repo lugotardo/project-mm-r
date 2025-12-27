@@ -1,0 +1,184 @@
+Perfeito! Vamos montar **um esqueleto funcional básico do projeto em Rust**, com **backend, cliente simples, comunicação UDP/TCP**, sistema de camadas 2D e entidades mínimas. Esse será o **ponto de partida** para expandir depois.
+
+Vou te dar um **exemplo de estrutura de pastas + código inicial funcional**, que você pode rodar imediatamente e ir expandindo.
+
+---
+
+## 1️⃣ Estrutura de pastas sugerida
+
+```
+dwarf_adventure/
+├─ Cargo.toml
+├─ backend/
+│  ├─ Cargo.toml
+│  └─ src/
+│     └─ main.rs
+├─ client/
+│  ├─ Cargo.toml
+│  └─ src/
+│     └─ main.rs
+└─ common/
+   ├─ Cargo.toml
+   └─ src/
+      └─ lib.rs
+```
+
+* **backend/** → servidor autoritativo
+* **client/** → cliente que envia input e recebe estado
+* **common/** → structs compartilhadas (tiles, entidades, pacotes UDP/TCP)
+
+---
+
+## 2️⃣ Cargo.toml principal (workspace)
+
+```toml
+[workspace]
+members = ["backend", "client", "common"]
+```
+
+---
+
+## 3️⃣ Common (tipos compartilhados)
+
+**common/src/lib.rs**
+
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Position {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Tile {
+    pub terrain: String,
+    pub walkable: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Entity {
+    pub id: u32,
+    pub name: String,
+    pub pos: Position,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ServerMessage {
+    WorldUpdate { tiles: Vec<Tile>, entities: Vec<Entity> },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ClientMessage {
+    Move { dx: i32, dy: i32 },
+}
+```
+
+> Estamos usando `serde` para serialização JSON. Você pode depois trocar para binário ou ECS sync.
+
+---
+
+## 4️⃣ Backend inicial
+
+**backend/src/main.rs**
+
+```rust
+use std::net::UdpSocket;
+use common::*;
+
+fn main() -> std::io::Result<()> {
+    let socket = UdpSocket::bind("127.0.0.1:4000")?;
+    println!("Servidor rodando no 127.0.0.1:4000");
+
+    // Mundo mínimo
+    let tiles = vec![
+        Tile { terrain: "grass".to_string(), walkable: true },
+        Tile { terrain: "water".to_string(), walkable: false },
+    ];
+
+    let mut entities = vec![
+        Entity { id: 1, name: "Player1".to_string(), pos: Position { x:0, y:0 } }
+    ];
+
+    let mut buf = [0u8; 1024];
+    loop {
+        let (amt, src) = socket.recv_from(&mut buf)?;
+        let msg: ClientMessage = serde_json::from_slice(&buf[..amt]).unwrap();
+        match msg {
+            ClientMessage::Move { dx, dy } => {
+                entities[0].pos.x += dx;
+                entities[0].pos.y += dy;
+                println!("Jogador moveu para: {:?}", entities[0].pos);
+            }
+        }
+
+        let update = ServerMessage::WorldUpdate {
+            tiles: tiles.clone(),
+            entities: entities.clone(),
+        };
+        let data = serde_json::to_vec(&update).unwrap();
+        socket.send_to(&data, src)?;
+    }
+}
+```
+
+---
+
+## 5️⃣ Cliente inicial
+
+**client/src/main.rs**
+
+```rust
+use std::net::UdpSocket;
+use common::*;
+use std::io;
+
+fn main() -> std::io::Result<()> {
+    let socket = UdpSocket::bind("127.0.0.1:0")?;
+    socket.connect("127.0.0.1:4000")?;
+    println!("Cliente conectado ao servidor");
+
+    loop {
+        // Recebe input do usuário
+        println!("Digite W/A/S/D para mover:");
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+        let input = input.trim();
+
+        let msg = match input {
+            "W" => ClientMessage::Move { dx:0, dy:-1 },
+            "S" => ClientMessage::Move { dx:0, dy:1 },
+            "A" => ClientMessage::Move { dx:-1, dy:0 },
+            "D" => ClientMessage::Move { dx:1, dy:0 },
+            _ => continue,
+        };
+
+        let data = serde_json::to_vec(&msg).unwrap();
+        socket.send(&data)?;
+
+        // Recebe update do servidor
+        let mut buf = [0u8; 1024];
+        let amt = socket.recv(&mut buf)?;
+        let update: ServerMessage = serde_json::from_slice(&buf[..amt]).unwrap();
+        println!("Estado do mundo: {:?}", update);
+    }
+}
+```
+
+---
+
+## ✅ Funcionalidade mínima
+
+* Servidor mantém **estado do mundo e entidades**
+* Cliente envia **movimentos**
+* Servidor atualiza posição e retorna **estado completo**
+* Comunicação **UDP** para gameplay simples (pode adicionar TCP depois para login/salvamento)
+* Mundo 2D com **camadas futuras** (tiles + entidades)
+* Base pronta para adicionar **IA, combate, inventário, história emergente**
+
+---
+
+Se você quiser, posso criar **uma versão 2D com renderização ASCII**, onde o jogador **vê o mundo em camadas simples** e já consegue **andar pelo mapa**, mantendo o mesmo backend.
+
+Quer que eu faça isso?

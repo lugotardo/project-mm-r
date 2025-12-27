@@ -7,11 +7,25 @@ pub struct World {
     terrain_layer: HashMap<Position, Tile>,
     /// Camada de entidades (criaturas, NPCs, jogadores)
     entity_layer: HashMap<u32, Entity>,
+    /// Comportamentos de IA para entidades
+    ai_behaviors: HashMap<u32, AIBehavior>,
+    /// Fações no mundo
+    #[allow(dead_code)]
+    factions: HashMap<u32, Faction>,
+    /// Eventos históricos
+    historical_events: Vec<HistoricalEvent>,
     /// Dimensões do mundo
     width: i32,
     height: i32,
     /// Próximo ID de entidade
     next_entity_id: u32,
+    /// Próximo ID de facção
+    #[allow(dead_code)]
+    next_faction_id: u32,
+    /// Próximo ID de evento
+    next_event_id: u64,
+    /// Tick atual do mundo
+    current_tick: u64,
 }
 
 impl World {
@@ -20,12 +34,19 @@ impl World {
         let mut world = Self {
             terrain_layer: HashMap::new(),
             entity_layer: HashMap::new(),
+            ai_behaviors: HashMap::new(),
+            factions: HashMap::new(),
+            historical_events: Vec::new(),
             width,
             height,
             next_entity_id: 1,
+            next_faction_id: 1,
+            next_event_id: 1,
+            current_tick: 0,
         };
         
         world.generate_terrain();
+        world.spawn_initial_npcs();
         world
     }
 
@@ -180,6 +201,119 @@ impl World {
     pub fn entity_count(&self) -> usize {
         self.entity_layer.len()
     }
+
+    /// Spawna NPCs iniciais com IA
+    fn spawn_initial_npcs(&mut self) {
+        // Spawna alguns NPCs com IA
+        for i in 0..5 {
+            let pos = Position::new(5 + i, 5 + i);
+            if let Some(id) = self.spawn_entity(
+                format!("NPC_{}", i),
+                pos,
+                EntityType::NPC,
+            ) {
+                self.ai_behaviors.insert(id, AIBehavior {
+                    current_goal: AIGoal::Wander,
+                    memory: Vec::new(),
+                    personality: Personality {
+                        aggression: 0.3,
+                        curiosity: 0.7,
+                        sociability: 0.5,
+                    },
+                });
+            }
+        }
+    }
+
+    /// Processa um tick do mundo
+    pub fn tick(&mut self) {
+        self.current_tick += 1;
+        
+        // Atualiza IA de todas as entidades
+        self.update_ai();
+        
+        // Atualiza fações
+        self.update_factions();
+        
+        // Gera eventos aleatórios
+        if self.current_tick % 100 == 0 {
+            self.generate_random_event();
+        }
+    }
+
+    fn update_ai(&mut self) {
+        let entity_ids: Vec<u32> = self.ai_behaviors.keys().copied().collect();
+        
+        for entity_id in entity_ids {
+            if let Some(behavior) = self.ai_behaviors.get(&entity_id) {
+                match behavior.current_goal {
+                    AIGoal::Wander => {
+                        // Movimento aleatório
+                        let dx = (self.current_tick % 3) as i32 - 1;
+                        let dy = ((self.current_tick / 3) % 3) as i32 - 1;
+                        self.move_entity(entity_id, dx, dy);
+                    }
+                    AIGoal::Patrol { start, end } => {
+                        // Patrulha entre dois pontos
+                        if let Some(entity) = self.entity_layer.get(&entity_id) {
+                            let target = if (self.current_tick / 50) % 2 == 0 { start } else { end };
+                            let dx = (target.x - entity.pos.x).signum();
+                            let dy = (target.y - entity.pos.y).signum();
+                            self.move_entity(entity_id, dx, dy);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    fn update_factions(&mut self) {
+        // Atualiza relações entre fações
+        // TODO: Implementar lógica de diplomacia
+    }
+
+    fn generate_random_event(&mut self) {
+        // Gera eventos históricos aleatórios
+        if self.entity_layer.len() > 1 {
+            let event = HistoricalEvent {
+                id: self.next_event_id,
+                tick: self.current_tick,
+                event_type: EventType::Combat,
+                participants: vec![1, 2],
+                location: Position::new(10, 10),
+                description: "A skirmish occurred in the grasslands".to_string(),
+            };
+            
+            self.next_event_id += 1;
+            self.historical_events.push(event);
+        }
+    }
+
+    /// Retorna tick atual
+    pub fn get_current_tick(&self) -> u64 {
+        self.current_tick
+    }
+
+    /// Retorna eventos históricos
+    pub fn get_historical_events(&self, limit: usize) -> Vec<HistoricalEvent> {
+        let start = if self.historical_events.len() > limit {
+            self.historical_events.len() - limit
+        } else {
+            0
+        };
+        self.historical_events[start..].to_vec()
+    }
+
+    /// Retorna todas as entidades (para debug/admin)
+    pub fn get_all_entities(&self) -> Vec<&Entity> {
+        self.entity_layer.values().collect()
+    }
+    
+    /// Retorna IDs de todas as entidades
+    pub fn get_entity_ids(&self) -> Vec<u32> {
+        self.entity_layer.keys().copied().collect()
+    }
 }
 
 /// Snapshot do mundo visível para enviar ao cliente
@@ -328,5 +462,25 @@ mod tests {
         
         assert!(snapshot.tiles.len() > 0);
         assert_eq!(snapshot.entities.len(), 1);
+    }
+
+    #[test]
+    fn test_world_tick() {
+        let mut world = World::new(20, 20);
+        let initial_tick = world.get_current_tick();
+        
+        world.tick();
+        
+        assert_eq!(world.get_current_tick(), initial_tick + 1);
+    }
+
+    #[test]
+    fn test_npc_spawning() {
+        let world = World::new(20, 20);
+        let npcs = world.entity_layer.values()
+            .filter(|e| e.entity_type == EntityType::NPC)
+            .count();
+        
+        assert_eq!(npcs, 5);
     }
 }

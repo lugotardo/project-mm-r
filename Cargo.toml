@@ -1,3 +1,10 @@
 [workspace]
-members = ["backend", "client", "common", "crate/world"]
+members = [
+    "backend",
+    "game-server",
+    "admin-server",
+    "common",
+    "crate/world",
+    "crate/ipc"
+]
 resolver = "2"

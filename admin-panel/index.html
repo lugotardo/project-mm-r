@@ -3,56 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Admin Panel - MM</title>
+    <title>MM - Admin Panel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🌍 Painel Administrativo - MM</h1>
-            <div id="connection-status" class="status disconnected">⚫ Desconectado</div>
+    <div class="page-bg"></div>
+    
+    <div class="torch torch-left"></div>
+    <div class="torch torch-right"></div>
+    
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-ornament left"></div>
+            <h1 class="main-title">ADMIN PANEL</h1>
+            <div class="header-ornament right"></div>
         </header>
 
-        <div class="dashboard">
-            <!-- Estatísticas -->
-            <section class="card stats">
-                <h2>📊 Estatísticas do Servidor</h2>
+        <!-- Navigation Tabs -->
+        <nav class="navigation-tabs">
+            <button class="nav-tab active" data-tab="overview">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">SERVER STATUS</span>
+            </button>
+            <button class="nav-tab" data-tab="world">
+                <span class="tab-icon">🗺️</span>
+                <span class="tab-label">WORLD MAP</span>
+            </button>
+            <button class="nav-tab" data-tab="players">
+                <span class="tab-icon">👥</span>
+                <span class="tab-label">PLAYERS</span>
+            </button>
+            <button class="nav-tab" data-tab="history">
+                <span class="tab-icon">📜</span>
+                <span class="tab-label">HISTORY</span>
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <!-- Tab: Overview -->
+            <section id="tab-overview" class="tab-panel active">
                 <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-label">Uptime</span>
-                        <span class="stat-value" id="uptime">--</span>
+                    <div class="stat-card">
+                        <div class="card-header">Server Stats</div>
+                        <div class="card-body">
+                            <div class="stat-row">
+                                <span class="stat-label">Uptime:</span>
+                                <span class="stat-value" id="uptime">00h 00m 00s</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">World Tick:</span>
+                                <span class="stat-value" id="world-tick">0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Jogadores Ativos</span>
-                        <span class="stat-value" id="active-players">0</span>
+
+                    <div class="stat-card">
+                        <div class="card-header">Population</div>
+                        <div class="card-body">
+                            <div class="stat-row">
+                                <span class="stat-label">Players Online:</span>
+                                <span class="stat-value highlight" id="player-count">0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Total Entities:</span>
+                                <span class="stat-value" id="total-entities">0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Total de Entidades</span>
-                        <span class="stat-value" id="total-entities">0</span>
+
+                    <div class="stat-card">
+                        <div class="card-header">Activity</div>
+                        <div class="card-body">
+                            <div class="stat-row">
+                                <span class="stat-label">Events:</span>
+                                <span class="stat-value" id="events">0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Mundo</span>
-                        <span class="stat-value" id="world-size">--</span>
+                </div>
+
+                <div class="event-feed-section">
+                    <div class="section-header">
+                        <h2>Live Event Stream</h2>
+                        <span class="status-indicator disconnected" id="connection-status">●</span>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Ticks Processados</span>
-                        <span class="stat-value" id="ticks">0</span>
+                    <div class="event-feed" id="event-stream">
+                        <div class="event-item info">Aguardando eventos...</div>
                     </div>
                 </div>
             </section>
 
-            <!-- Eventos em Tempo Real -->
-            <section class="card events">
-                <h2>📡 Eventos em Tempo Real</h2>
-                <div id="events-container" class="events-list"></div>
+            <!-- Tab: World Map -->
+            <section id="tab-world" class="tab-panel">
+                <div class="map-section">
+                    <div class="section-header">
+                        <h2>World Map - ASCII View</h2>
+                    </div>
+                    <div class="map-container">
+                        <pre id="world-map" class="ascii-map">Carregando mapa...</pre>
+                    </div>
+                    <div class="map-legend">
+                        <span class="legend-item"><span class="legend-glyph mountain">█</span> Mountain</span>
+                        <span class="legend-item"><span class="legend-glyph water">~</span> Water</span>
+                        <span class="legend-item"><span class="legend-glyph grass">░</span> Grass</span>
+                        <span class="legend-item"><span class="legend-glyph player">@</span> Player</span>
+                    </div>
+                </div>
             </section>
 
-            <!-- Mapa do Mundo -->
-            <section class="card map">
-                <h2>🗺️ Visão Geral do Mundo</h2>
-                <div id="world-map" class="world-grid"></div>
+            <!-- Tab: Players -->
+            <section id="tab-players" class="tab-panel">
+                <div class="section-header">
+                    <h2>Online Players</h2>
+                </div>
+                <div class="player-list" id="player-list">
+                    <div class="player-card">Carregando jogadores...</div>
+                </div>
             </section>
-        </div>
+
+            <!-- Tab: History -->
+            <section id="tab-history" class="tab-panel">
+                <div class="section-header">
+                    <h2>Historical Records</h2>
+                </div>
+                <div class="history-timeline" id="history-log">
+                    <div class="history-entry">Nenhum evento histórico registrado ainda</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="admin-footer">
+            <div class="footer-content">
+                <span>Server uptime: <span id="footer-uptime">--</span></span>
+                <span class="separator">•</span>
+                <span>Powered by Rust</span>
+                <span class="separator">•</span>
+                <span>© 2024 MM</span>
+            </div>
+        </footer>
     </div>
 
     <script src="script.js"></script>

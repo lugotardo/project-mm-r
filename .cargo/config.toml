@@ -1,0 +1,6 @@
+[alias]
+backend = "run --bin backend"
+game = "run --bin game-server"
+admin = "run --bin admin-server"
+all = "build --bins"
+test-all = "test --all"

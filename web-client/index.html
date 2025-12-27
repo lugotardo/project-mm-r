@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MM - Adventure Mode</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>⚔ MM - ADVENTURE MODE ⚔</h1>
+            <div class="status-bar">
+                <span id="player-name">Not Logged In</span>
+                <span class="separator">|</span>
+                <span id="position">@(0,0)</span>
+                <span class="separator">|</span>
+                <span>Tick: <span id="tick">0</span></span>
+            </div>
+        </div>
+
+        <div class="game-layout">
+            <!-- Viewport Principal -->
+            <div class="viewport-container">
+                <canvas id="game-canvas"></canvas>
+                <div id="tile-info" class="tile-info"></div>
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="panel">
+                    <h3>CONTROLS</h3>
+                    <div class="controls-grid">
+                        <span></span><span>↑ k</span><span></span>
+                        <span>← h</span><span>·</span><span>l →</span>
+                        <span></span><span>↓ j</span><span></span>
+                    </div>
+                    <div class="key-hints">
+                        <div>wasd / hjkl : Move</div>
+                        <div>. : Wait</div>
+                        <div>i : Inventory</div>
+                        <div>? : Help</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>NEARBY</h3>
+                    <div id="nearby-list" class="nearby-list"></div>
+                </div>
+
+                <div class="panel">
+                    <h3>MESSAGE LOG</h3>
+                    <div id="message-log" class="message-log"></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2>⚔ Enter the World ⚔</h2>
+            <p class="debug-mode">🔧 DEBUG MODE - Auto-login enabled</p>
+            <input type="text" id="player-name-input" placeholder="Character Name" maxlength="20" value="Adventurer">
+            <input type="password" id="player-password-input" placeholder="Password (optional)" maxlength="50" value="">
+            <button id="login-btn">Start Adventure</button>
+            <div class="login-hint">
+                Press Enter or click button to start
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

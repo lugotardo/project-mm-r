@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use tokio::sync::broadcast;
 use common::*;
+use std::time::Instant;
 
 /// Estatísticas do servidor
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -33,6 +34,7 @@ pub struct AdminState {
     pub events: Vec<AdminEvent>,
     pub max_events: usize,
     pub event_tx: broadcast::Sender<AdminEvent>,
+    pub start_time: Instant,
 }
 
 impl AdminState {
@@ -42,6 +44,7 @@ impl AdminState {
             events: Vec::new(),
             max_events: 1000,
             event_tx: tx,
+            start_time: Instant::now(),
         }
     }
 
@@ -61,30 +64,50 @@ impl AdminState {
         };
         self.events[start..].to_vec()
     }
+    
+    pub fn get_uptime_seconds(&self) -> u64 {
+        self.start_time.elapsed().as_secs()
+    }
 }
 
 pub type SharedAdminState = Arc<Mutex<AdminState>>;
 
+// Estrutura para compartilhar stats do jogo
+#[derive(Clone)]
+pub struct GameStats {
+    pub world_size: (i32, i32),
+    pub total_entities: usize,
+    pub active_players: usize,
+    pub current_tick: u64,
+}
+
 /// Inicia servidor admin HTTP + WebSocket
-pub async fn start_admin_server(admin_state: SharedAdminState) {
-    let admin_state = warp::any().map(move || admin_state.clone());
+pub async fn start_admin_server(
+    admin_state: SharedAdminState,
+    stats_rx: tokio::sync::watch::Receiver<GameStats>,
+) {
+    let admin_state_filter = warp::any().map(move || admin_state.clone());
+    let stats_filter = warp::any().map(move || stats_rx.clone());
 
     // Rota: GET /api/stats
     let stats_route = warp::path!("api" / "stats")
-        .and(admin_state.clone())
-        .map(|state: SharedAdminState| {
-            let state = state.lock().unwrap();
-            // Mock stats - você substituirá com dados reais
-            let stats = ServerStats {
-                uptime_seconds: 3600,
-                total_players: 10,
-                active_players: 3,
-                world_size: (20, 20),
-                total_entities: 15,
-                total_tiles: 400,
-                ticks_processed: 7200,
+        .and(admin_state_filter.clone())
+        .and(stats_filter.clone())
+        .map(|admin: SharedAdminState, stats: tokio::sync::watch::Receiver<GameStats>| {
+            let admin = admin.lock().unwrap();
+            let game_stats = stats.borrow().clone();
+            
+            let response = ServerStats {
+                uptime_seconds: admin.get_uptime_seconds(),
+                total_players: game_stats.active_players,
+                active_players: game_stats.active_players,
+                world_size: game_stats.world_size,
+                total_entities: game_stats.total_entities,
+                total_tiles: (game_stats.world_size.0 * game_stats.world_size.1) as usize,
+                ticks_processed: game_stats.current_tick,
             };
-            warp::reply::json(&stats)
+            
+            warp::reply::json(&response)
         });
 
     // Rota: GET /api/events?limit=50
@@ -116,8 +139,8 @@ pub async fn start_admin_server(admin_state: SharedAdminState) {
         .or(ws_route)
         .or(static_files);
 
-    println!("🖥️  Painel Admin: http://127.0.0.1:3030");
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    println!("🖥️  Painel Admin: http://127.0.0.1:3031");
+    warp::serve(routes).run(([127, 0, 0, 1], 3031)).await;
 }
 
 /// Handler do WebSocket
